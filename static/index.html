@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisAgent — Smart Network Security Monitor</title>
+  <meta name="description" content="AegisAgent watches your network in real-time, automatically detects attacks, blocks threats, and learns from new patterns — all without you having to do anything.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="cyber-theme">
+  <!-- Background Effects -->
+  <div class="cyber-grid-bg"></div>
+  <div class="cyber-glow-orb orb-1"></div>
+  <div class="cyber-glow-orb orb-2"></div>
+
+  <div class="app-layout">
+
+    <!-- ── Header ── -->
+    <header class="top-nav" id="topNav">
+      <div class="nav-brand">
+        <div class="brand-shield">
+          <span class="shield-icon">🛡️</span>
+          <span class="shield-pulse"></span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">AEGIS<span class="brand-highlight">AGENT</span>
+            <span class="tag-badge version-tag" id="modelVersionBadge">v1</span>
+          </div>
+          <div class="brand-subtitle">Self-Learning Network Security · Spots &amp; Stops Attacks Automatically</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="nav-controls">
+        <div class="stream-pill">
+          <button id="btnPlayPause" class="ctrl-btn btn-play" title="Start monitoring">
+            <span class="ctrl-icon" id="playPauseIcon">▶</span>
+            <span id="playPauseText">START MONITORING</span>
+          </button>
+          <button id="btnReset" class="ctrl-btn btn-reset" title="Reset">
+            <span class="ctrl-icon">↺</span>
+          </button>
+        </div>
+        <div class="speed-selector">
+          <span class="speed-label">SPEED</span>
+          <button class="speed-btn active" data-delay="0.08" id="speed1x">1×</button>
+          <button class="speed-btn" data-delay="0.03" id="speed3x">3×</button>
+          <button class="speed-btn" data-delay="0.008" id="speedFast">MAX</button>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Auto / Manual switch -->
+        <div class="auto-mode-container" title="Auto: the AI blocks attackers and retrains itself. Manual: the AI only recommends, and you approve.">
+          <label class="switch-label">
+            <input type="checkbox" id="autoModeToggle" checked>
+            <span class="slider-round"></span>
+          </label>
+          <div class="mode-text">
+            <span class="mode-status" id="modeStatusText">AUTO</span>
+            <span class="mode-desc" id="modeDescText">AI acts on its own</span>
+          </div>
+        </div>
+
+        <button id="btnExportReport" class="action-btn btn-export">
+          <span class="btn-icon">⬇</span>
+          <span>Download Report</span>
+        </button>
+
+        <div class="ws-indicator" id="dataSourceBadge" title="Data the model was trained on" style="margin-right:10px;">
+          <span class="ws-label" id="dataSourceText">DATA: LOADING...</span>
+        </div>
+
+        <div class="ws-indicator" id="wsIndicator" title="Connection status">
+          <span class="ws-dot"></span>
+          <span class="ws-label" id="wsLabel">CONNECTING...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── "What is this?" Intro Banner ── -->
+    <section class="intro-banner" id="introBanner">
+      <div class="intro-content">
+        <div class="intro-icon">🤖</div>
+        <div class="intro-text">
+          <strong>AegisAgent</strong> monitors network traffic in real time.
+          It uses AI to decide — in milliseconds — whether each packet is safe or an attack.
+          When it detects a threat, it <em>automatically blocks the attacker</em> and updates its model to stay sharp.
+          <button class="intro-dismiss" id="introDismiss">Got it ✓</button>
+        </div>
+      </div>
+    </section>
+
+    <main class="main-content">
+
+      <!-- ── Row 1: Status Cards ── -->
+      <section class="kpi-grid" aria-label="System overview">
+
+        <!-- Card 1: Packets scanned -->
+        <div class="kpi-card" id="kpiThroughput">
+          <div class="kpi-header">
+            <span class="kpi-title">Packets Scanned</span>
+            <span class="kpi-icon icon-cyan">⚡</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="valPackets">0</span>
+            <span class="kpi-unit">total</span>
+          </div>
+          <div class="kpi-sub-row">
+            <span class="kpi-sub-pill" id="valThroughput">0.0 / sec</span>
+            <span class="kpi-sub-meta" id="valLatency">Response: 1.2 ms</span>
+          </div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill cyan-fill" style="width:100%;"></div>
+          </div>
+          <div class="kpi-help">Every network packet is checked by the AI</div>
+        </div>
+
+        <!-- Card 2: Accuracy -->
+        <div class="kpi-card" id="kpiAccuracy">
+          <div class="kpi-header">
+            <span class="kpi-title">Detection Accuracy</span>
+            <span class="kpi-icon icon-emerald">🎯</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="valAccuracy">—</span>
+            <span class="kpi-unit">correct</span>
+          </div>
+          <div class="kpi-sub-row">
+            <span class="kpi-sub-pill green-pill"><span id="valAttacks">0</span> Attacks Blocked</span>
+            <span class="kpi-sub-meta"><span id="valNormal">0</span> Safe</span>
+          </div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill emerald-fill" id="accuracyFill" style="width:0%;"></div>
+          </div>
+          <div class="kpi-help">How often the AI classifies traffic correctly</div>
+        </div>
+
+        <!-- Card 3: AI Health -->
+        <div class="kpi-card" id="kpiDrift">
+          <div class="kpi-header">
+            <span class="kpi-title">AI Health</span>
+            <span class="kpi-icon icon-amber">🧠</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value status-badge-stable" id="valAgentStatus">HEALTHY</span>
+            <span class="kpi-unit">Step: <span id="valOodaPhase">Watching</span></span>
+          </div>
+          <div class="kpi-sub-row">
+            <span class="kpi-sub-pill amber-pill">Confidence: <span id="valCurrentConf">100.0%</span></span>
+            <span class="kpi-sub-meta">Baseline: <span id="valBaselineConf">100.0%</span></span>
+          </div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill amber-fill" id="confProgressFill" style="width:100%;"></div>
+          </div>
+          <div class="kpi-help">How confident the AI is in its decisions right now</div>
+        </div>
+
+        <!-- Card 4: Blocked IPs -->
+        <div class="kpi-card" id="kpiContainment">
+          <div class="kpi-header">
+            <span class="kpi-title">Attackers Blocked</span>
+            <span class="kpi-icon icon-crimson">🚫</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="valBlockedCount">0</span>
+            <span class="kpi-unit">IPs blocked</span>
+          </div>
+          <div class="kpi-sub-row">
+            <span class="kpi-sub-pill crimson-pill"><span id="valAdaptations">0</span> Auto-retrains</span>
+            <span class="kpi-sub-meta" id="valMitreCoverage">MITRE ATT&CK mapped</span>
+          </div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill crimson-fill" style="width:100%;"></div>
+          </div>
+          <div class="kpi-help">Attacker IPs automatically banned by the AI</div>
+        </div>
+
+      </section>
+
+      <!-- ── Row 2: Simulate an Attack + AI Thinking Log ── -->
+      <section class="ops-grid">
+
+        <!-- Left: Try an attack -->
+        <div class="cyber-panel attack-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot crimson-dot"></span>
+              <h2 class="panel-title">Try an Attack</h2>
+              <span class="panel-subtitle">See how fast the AI responds</span>
+            </div>
+            <span class="panel-tag">ONE-CLICK DEMO</span>
+          </div>
+
+          <div class="panel-body">
+            <p class="injection-intro">
+              Click any button below to simulate a real attack type.
+              Watch the AI detect and block it — usually in under a second.
+            </p>
+
+            <div class="attack-buttons-grid">
+              <button class="attack-trigger-btn btn-ddos" data-type="DoS / SYN Flood" data-count="35">
+                <div class="attack-btn-icon">💥</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title">Flood Attack (DDoS)</div>
+                  <div class="attack-btn-mitre">Overwhelms a server with fake requests</div>
+                </div>
+              </button>
+
+              <button class="attack-trigger-btn btn-scan" data-type="Probe / Stealth Port Scan" data-count="30">
+                <div class="attack-btn-icon">🕵️</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title">Port Scanning</div>
+                  <div class="attack-btn-mitre">Hacker secretly probing for open doors</div>
+                </div>
+              </button>
+
+              <button class="attack-trigger-btn btn-brute" data-type="R2L / SSH Brute Force" data-count="30">
+                <div class="attack-btn-icon">🔑</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title">Password Cracking</div>
+                  <div class="attack-btn-mitre">Trying thousands of passwords to break in</div>
+                </div>
+              </button>
+
+              <button class="attack-trigger-btn btn-exfil" data-type="Data Exfiltration / C2" data-count="25">
+                <div class="attack-btn-icon">📦</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title">Data Theft</div>
+                  <div class="attack-btn-mitre">Secretly stealing files from a server</div>
+                </div>
+              </button>
+
+              <button class="attack-trigger-btn btn-drift" id="btnTriggerDrift" data-count="45">
+                <div class="attack-btn-icon">🌪️</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title highlight-gold">Confuse the AI</div>
+                  <div class="attack-btn-mitre highlight-gold-sub">Watch it auto-retrain and recover!</div>
+                </div>
+              </button>
+
+              <button class="attack-trigger-btn btn-manual-adapt" id="btnManualAdapt">
+                <div class="attack-btn-icon">⚡</div>
+                <div class="attack-btn-info">
+                  <div class="attack-btn-title">Force AI Update</div>
+                  <div class="attack-btn-mitre">Manually trigger a model upgrade now</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: AI Thinking Log -->
+        <div class="cyber-panel agent-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot cyan-dot"></span>
+              <h2 class="panel-title">What the AI is thinking</h2>
+              <span class="panel-subtitle">Live reasoning log</span>
+            </div>
+            <!-- Step pills renamed -->
+            <div class="ooda-pills" id="oodaPills">
+              <span class="ooda-step active" id="oodaObserve">👁 Watch</span>
+              <span class="ooda-arrow">→</span>
+              <span class="ooda-step" id="oodaOrient">🔍 Analyse</span>
+              <span class="ooda-arrow">→</span>
+              <span class="ooda-step" id="oodaDecide">💡 Decide</span>
+              <span class="ooda-arrow">→</span>
+              <span class="ooda-step" id="oodaAct">🛡 Act</span>
+            </div>
+          </div>
+
+          <div class="panel-body ooda-terminal-body">
+            <!-- Simple metrics row -->
+            <div class="drift-gauge-row">
+              <div class="gauge-metric">
+                <span class="g-label">Current Confidence</span>
+                <span class="g-val cyan-text" id="gaugeCurrentConf">100.0%</span>
+              </div>
+              <div class="gauge-metric">
+                <span class="g-label">Expected (Baseline)</span>
+                <span class="g-val" id="gaugeBaselineConf">100.0%</span>
+              </div>
+              <div class="gauge-metric">
+                <span class="g-label">Confidence Drop</span>
+                <span class="g-val green-text" id="gaugeDriftDrop">0.0%</span>
+              </div>
+              <div class="gauge-metric">
+                <span class="g-label">Times Retrained</span>
+                <span class="g-val gold-text" id="gaugeAdaptCount">0</span>
+              </div>
+            </div>
+
+            <!-- Thought console -->
+            <div class="thought-console" id="thoughtConsole">
+              <div class="terminal-line system-line">
+                <span class="t-stamp">[BOOT]</span>
+                <span class="t-tag t-init">READY</span>
+                <span class="t-msg">AegisAgent started. Waiting for network traffic to analyse...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Row 3: Charts ── -->
+      <section class="charts-grid">
+
+        <!-- Confidence chart -->
+        <div class="cyber-panel chart-panel-large">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot emerald-dot"></span>
+              <h2 class="panel-title">AI Confidence Over Time</h2>
+              <span class="panel-subtitle">Drops when traffic patterns change; auto-recovers by retraining</span>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-color line-conf"></span> Live confidence</span>
+              <span class="legend-item"><span class="legend-color line-base"></span> Expected level</span>
+              <span class="legend-item"><span class="legend-color line-thresh"></span> Alert threshold</span>
+            </div>
+          </div>
+          <div class="panel-body chart-body">
+            <canvas id="confidenceCanvas" class="telemetry-canvas" height="190"></canvas>
+          </div>
+        </div>
+
+        <!-- Attack breakdown -->
+        <div class="cyber-panel chart-panel-small">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot amber-dot"></span>
+              <h2 class="panel-title">Attack Types Detected</h2>
+            </div>
+            <span class="panel-tag">BREAKDOWN</span>
+          </div>
+          <div class="panel-body">
+            <div class="taxonomy-bars" id="taxonomyBars">
+              <div class="empty-state-small">No attacks detected yet.</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── Row 4: Live Traffic Table ── -->
+      <section class="cyber-panel packet-feed-panel">
+        <div class="panel-header">
+          <div class="panel-title-wrap">
+            <span class="panel-dot cyan-dot"></span>
+            <h2 class="panel-title">Live Network Traffic</h2>
+            <span class="panel-subtitle">Click any row to see exactly why the AI made its decision</span>
+          </div>
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all" id="filterAll">All Traffic</button>
+            <button class="filter-pill" data-filter="attacks" id="filterAttacks">Attacks Only</button>
+            <button class="filter-pill" data-filter="normal" id="filterNormal">Safe Only</button>
+          </div>
+        </div>
+
+        <div class="panel-body no-pad">
+          <div class="table-container">
+            <table class="packet-table" id="packetTable">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>ID</th>
+                  <th>From IP</th>
+                  <th>To IP</th>
+                  <th>Protocol</th>
+                  <th>AI Decision</th>
+                  <th>Confidence</th>
+                  <th>Risk Score</th>
+                  <th>Action Taken</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="packetTableBody">
+                <tr class="table-empty-row" id="emptyRow">
+                  <td colspan="10" class="text-center py-6">
+                    <div class="empty-state">
+                      <span class="empty-icon">📡</span>
+                      <p>Click <strong>START MONITORING</strong> above to begin.</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Row 5: Blocked IPs + Alerts + AI History ── -->
+      <section class="defense-grid">
+
+        <!-- Blocked IPs -->
+        <div class="cyber-panel quarantine-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot crimson-dot"></span>
+              <h2 class="panel-title">Blocked Attackers</h2>
+              <span class="panel-subtitle">IPs automatically banned</span>
+            </div>
+            <span class="badge-count" id="badgeQuarantineCount">0 BLOCKED</span>
+          </div>
+          <div class="panel-body no-pad">
+            <div class="quarantine-list" id="quarantineList">
+              <div class="empty-state-list">
+                <span>🛡️</span>
+                <p>No attackers blocked yet. Network is clear.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="cyber-panel alerts-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot amber-dot"></span>
+              <h2 class="panel-title">Security Alerts</h2>
+              <span class="panel-subtitle">Unique threat events</span>
+            </div>
+            <span class="badge-count" id="badgeIncidentCount">0 ALERTS</span>
+          </div>
+          <div class="panel-body no-pad">
+            <div class="alerts-list" id="alertsList">
+              <div class="empty-state-list">
+                <span>📋</span>
+                <p>No alerts yet. All clear.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI upgrade history -->
+        <div class="cyber-panel model-evolution-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-dot gold-dot"></span>
+              <h2 class="panel-title">AI Upgrade History</h2>
+              <span class="panel-subtitle">Every time the AI learned something new</span>
+            </div>
+            <span class="badge-count" id="badgeModelVersion">VERSION 1.0</span>
+          </div>
+          <div class="panel-body no-pad">
+            <div class="evolution-list" id="evolutionList">
+              <div class="evolution-item">
+                <div class="evo-version">AI v1.0 — Initial Training</div>
+                <div class="evo-details">Trained on 3,500 normal &amp; attack samples. Ready to detect threats.</div>
+                <div class="evo-meta">Start-up • Baseline established</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>AegisAgent</span> · <span>AI-Powered Network Security</span>
+      </div>
+      <div class="footer-right">
+        <span>Hackathon 2026</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ── Packet Detail Modal ── -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="cyber-modal" id="explainModal">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon" id="modalIcon">🛡️</span>
+          <div>
+            <h3 class="modal-title" id="modalTitle">Packet Analysis</h3>
+            <span class="modal-subtitle" id="modalSubtitle">ID: #0 · From: 0.0.0.0</span>
+          </div>
+        </div>
+        <button class="modal-close" id="modalCloseBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Verdict -->
+        <div class="modal-verdict-box" id="modalVerdictBox">
+          <div class="verdict-main">
+            <div class="verdict-label" id="modalVerdictLabel">SAFE TRAFFIC</div>
+            <div class="verdict-type" id="modalAttackType">Normal network activity</div>
+          </div>
+          <div class="verdict-stats">
+            <div class="stat-pill">AI Confidence: <strong id="modalConfVal">99.8%</strong></div>
+            <div class="stat-pill">Risk Score: <strong id="modalAnomalyVal">0.05</strong></div>
+          </div>
+        </div>
+
+        <!-- Why did the AI decide this? -->
+        <div class="modal-section">
+          <h4 class="section-title">🤖 Why did the AI make this decision?</h4>
+          <div class="reasoning-card" id="modalReasoningText">
+            Classified as safe. Traffic patterns look normal.
+          </div>
+        </div>
+
+        <!-- Threat details (only shown for attacks) -->
+        <div class="modal-section" id="modalMitreSection">
+          <h4 class="section-title">🎯 Threat Details &amp; What It Means</h4>
+          <div class="mitre-card" id="modalMitreCard">
+            <div class="mitre-row">
+              <span class="mitre-tag" id="modalMitreId">T1498.001</span>
+              <span class="mitre-technique" id="modalMitreName">Direct Network Flood</span>
+              <span class="severity-badge sev-high" id="modalSeverity">HIGH RISK</span>
+            </div>
+            <p class="mitre-desc" id="modalMitreDesc">Attacker sends massive traffic to crash the server.</p>
+            <div class="mitre-action-box">
+              <span class="action-label">ACTION TAKEN:</span>
+              <code class="firewall-rule" id="modalFirewallRule">Block rule applied automatically</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feature breakdown -->
+        <div class="modal-section">
+          <h4 class="section-title">📊 What suspicious signals did the AI see?</h4>
+          <div class="features-breakdown" id="modalFeaturesList"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="modalDismissBtn">Close</button>
+        <button class="btn-quarantine" id="modalQuarantineBtn">Block This IP Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // Dismiss intro banner
+    document.getElementById('introDismiss').addEventListener('click', function() {
+      const banner = document.getElementById('introBanner');
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-10px)';
+      setTimeout(() => banner.remove(), 400);
+    });
+
+    // Rename OODA phases to plain English in the agent log
+    const phaseMap = {
+      'OBSERVE': '👁 Watching',
+      'ORIENT':  '🔍 Analysing',
+      'DECIDE':  '💡 Deciding',
+      'ACT':     '🛡 Acting'
+    };
+    // Patch updateOodaPhase after app.js loads
+    window.addEventListener('load', () => {
+      if (window._patchOoda) return;
+      window._patchOoda = true;
+      const orig = window.updateOodaPhase;
+      // The phase display is updated by app.js directly via element IDs,
+      // so we patch the element text instead:
+      const phaseEl = document.getElementById('valOodaPhase');
+      if (phaseEl) {
+        const observer = new MutationObserver(() => {
+          const raw = phaseEl.textContent.trim().toUpperCase();
+          if (phaseMap[raw]) phaseEl.textContent = phaseMap[raw];
+        });
+        observer.observe(phaseEl, { childList: true, subtree: true, characterData: true });
+      }
+    });
+  </script>
+</body>
+</html>
